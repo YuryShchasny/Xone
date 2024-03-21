@@ -19,9 +19,6 @@ import com.test.xone.domain.ImageEntity
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import javax.inject.Inject
 
 class MainActivity : AppCompatActivity() {

@@ -3,7 +3,6 @@ package com.test.xone.presentation
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.test.xone.R
 

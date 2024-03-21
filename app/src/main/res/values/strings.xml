@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Xone</string>
+    <string name="locations">ЛОКАЦИИ</string>
+    <string name="streets">Улицы</string>
+    <string name="name_section">Название раздела</string>
+    <string name="name_location">Название локации</string>
+    <string name="delete">Удалить</string>
+</resources>

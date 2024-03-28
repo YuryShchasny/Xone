@@ -1,8 +1,8 @@
 package com.test.xone.domain
 
-import androidx.lifecycle.LiveData
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class GetImageEntityListUseCase @Inject constructor(private val appRepository: AppRepository) {
-    operator fun invoke(): LiveData<List<ImageEntity>> = appRepository.getImageList()
+    operator fun invoke(): Flow<List<ImageEntity>> = appRepository.getImageList()
 }

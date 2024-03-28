@@ -101,8 +101,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setObservable() {
-        viewModel.list.observe(this) {
-            viewModel.setContentState(it)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                viewModel.list.collect {
+                    viewModel.setContentState(it)
+                }
+            }
         }
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.RESUMED) {

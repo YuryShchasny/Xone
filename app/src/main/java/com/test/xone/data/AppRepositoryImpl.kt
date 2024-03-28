@@ -2,11 +2,11 @@ package com.test.xone.data
 
 import android.net.Uri
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.map
 import com.google.firebase.storage.FirebaseStorage
 import com.test.xone.domain.AppRepository
 import com.test.xone.domain.ImageEntity
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.io.File
 import javax.inject.Inject
 
@@ -27,8 +27,9 @@ class AppRepositoryImpl @Inject constructor(
         deleteImageInStorage(imageEntity)
     }
 
-    override fun getImageList(): LiveData<List<ImageEntity>> {
+    override fun getImageList(): Flow<List<ImageEntity>> {
         return imageEntityDao.getAllImages().map {
+            Log.d("AppRepositoryImpl", "map")
             imageEntityMapper.mapListDbModelToListEntity(it)
         }
     }

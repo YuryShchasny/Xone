@@ -29,7 +29,6 @@ class AppRepositoryImpl @Inject constructor(
 
     override fun getImageList(): Flow<List<ImageEntity>> {
         return imageEntityDao.getAllImages().map {
-            Log.d("AppRepositoryImpl", "map")
             imageEntityMapper.mapListDbModelToListEntity(it)
         }
     }

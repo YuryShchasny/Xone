@@ -1,11 +1,11 @@
 package com.test.xone.data
 
-import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ImageEntityDao {
@@ -14,7 +14,7 @@ interface ImageEntityDao {
     suspend fun insertImage(imageEntityDbModel: ImageEntityDbModel)
 
     @Query("SELECT * FROM images")
-    fun getAllImages(): LiveData<List<ImageEntityDbModel>>
+    fun getAllImages(): Flow<List<ImageEntityDbModel>>
 
     @Delete
     suspend fun deleteImage(imageEntityDbModel: ImageEntityDbModel)

@@ -10,12 +10,16 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.GridLayoutManager
 import com.test.xone.R
 import com.test.xone.databinding.ActivityMainBinding
 import com.test.xone.di.ViewModelFactory
 import com.test.xone.domain.ImageEntity
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -45,17 +49,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private lateinit var imagePickerLauncher: ActivityResultLauncher<Intent>
+    private lateinit var adapter: ImageItemListAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         component.inject(this)
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+        setObservable()
         setEditText()
         initImagePickerLauncher()
-        initRecyclerView()
-        setObservable()
         setListeners()
-
     }
 
     private fun setEditText() {
@@ -87,22 +90,66 @@ class MainActivity : AppCompatActivity() {
             getSharedPreferences(APP_PREFS, MODE_PRIVATE).edit()
                 .putString(LOCATION_PREF, it.toString()).apply()
         }
+        binding.buttonDelete.setOnClickListener {
+            adapter.currentList.forEach {
+                if (it.isChecked) {
+                    viewModel.deleteImage(it)
+                }
+            }
+            viewModel.setLoadingState()
+        }
     }
 
     private fun setObservable() {
-        viewModel.recyclerViewDeleteMode.observe(this) {isDeleteMode ->
-            binding.buttonDelete.visibility = if (isDeleteMode) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
-            initRecyclerView(isDeleteMode)
-            onBackPressedDispatcher.addCallback {
-                if(isDeleteMode) {
-                    viewModel.setRecyclerViewMode(false)
-                }
-                else {
-                    finish()
+        viewModel.list.observe(this) {
+            viewModel.setContentState(it)
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                viewModel.state.collect { state ->
+                    when (state) {
+                        is State.Content -> {
+                            binding.buttonDelete.visibility = View.GONE
+                            binding.progressBar.visibility = View.GONE
+                            initRecyclerView(false)
+                            onBackPressedDispatcher.addCallback {
+                                finish()
+                            }
+                            adapter.submitList(state.currencyList)
+                            adapter.onClickListener = { item, _ ->
+                                showImage(item.imageUri)
+                            }
+                            adapter.onLongClickListener = {
+                                it.isChecked = true
+                                viewModel.setDeleteState(adapter.currentList)
+                            }
+                        }
+
+
+                        is State.Deleting -> {
+                            binding.buttonDelete.visibility = View.VISIBLE
+                            binding.progressBar.visibility = View.GONE
+                            onBackPressedDispatcher.addCallback {
+                                val list = state.currencyList
+                                    .map { it.copy(isChecked = false) }
+                                viewModel.setContentState(list)
+                            }
+                            initRecyclerView(true)
+                            adapter.submitList(state.currencyList)
+                            adapter.onClickListener = { item, position ->
+                                item.isChecked = !item.isChecked
+                                adapter.notifyItemChanged(position)
+                            }
+                            adapter.onLongClickListener = {
+                                onBackPressedDispatcher.onBackPressed()
+                            }
+                        }
+
+
+                        State.Loading -> {
+                            binding.progressBar.visibility = View.VISIBLE
+                        }
+                    }
                 }
             }
         }
@@ -123,38 +170,8 @@ class MainActivity : AppCompatActivity() {
         val layoutManager = GridLayoutManager(this@MainActivity, spanCount)
         binding.recyclerViewImages.layoutManager = layoutManager
 
-        val adapter = ImageItemListAdapter(this@MainActivity, deleteMode)
+        adapter = ImageItemListAdapter(this@MainActivity, deleteMode)
         binding.recyclerViewImages.adapter = adapter
-        adapter.onClickListener = { item, position ->
-            if (deleteMode) {
-                item.isChecked = !item.isChecked
-                adapter.notifyItemChanged(position)
-            } else {
-                showImage(item.imageUri)
-            }
-        }
-        adapter.onLongClickListener = {
-            if (deleteMode) {
-                adapter.currentList.forEach { image ->
-                    image.isChecked = false
-                }
-                viewModel.setRecyclerViewMode(false)
-            } else {
-                it.isChecked = true
-                viewModel.setRecyclerViewMode(true)
-            }
-        }
-        viewModel.imageList.observe(this@MainActivity) {
-            adapter.submitList(it)
-        }
-        binding.buttonDelete.setOnClickListener {
-            adapter.currentList.forEach {
-                if (it.isChecked) {
-                    viewModel.deleteImage(it)
-                }
-            }
-            viewModel.setRecyclerViewMode(false)
-        }
     }
 
     private fun initImagePickerLauncher() {

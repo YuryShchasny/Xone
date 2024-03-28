@@ -1,26 +1,25 @@
 package com.test.xone.presentation
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.test.xone.domain.AddImageEntityUseCase
 import com.test.xone.domain.DeleteImageEntityUseCase
 import com.test.xone.domain.GetImageEntityListUseCase
 import com.test.xone.domain.ImageEntity
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class MainViewModel @Inject constructor(
-    private val getImageEntityListUseCase: GetImageEntityListUseCase,
+    getImageEntityListUseCase: GetImageEntityListUseCase,
     private val addImageEntityUseCase: AddImageEntityUseCase,
     private val deleteImageEntityUseCase: DeleteImageEntityUseCase
 ) : ViewModel() {
+    private val _state = MutableStateFlow<State>(State.Loading)
+    val state = _state.asStateFlow()
 
-    private var _recyclerViewDeleteMode = MutableLiveData<Boolean>()
-    val recyclerViewDeleteMode : LiveData<Boolean> get() = _recyclerViewDeleteMode
-
-    val imageList = getImageEntityListUseCase()
+    val list = getImageEntityListUseCase()
 
     fun addImage(imageUri: String) {
         viewModelScope.launch {
@@ -34,8 +33,18 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun setRecyclerViewMode(isDeleteMode: Boolean) {
-        _recyclerViewDeleteMode.value = isDeleteMode
+    fun setDeleteState(list: List<ImageEntity>) {
+        _state.value = State.Deleting(list)
     }
+
+    fun setLoadingState() {
+        _state.value = State.Loading
+    }
+
+    fun setContentState(list: List<ImageEntity>) {
+        _state.value = State.Content(list)
+    }
+
+
 
 }
